@@ -1,0 +1,11 @@
+<h2>Book Appointment</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <input type="text" name="patient_name" placeholder="Patient Name" required><br><br>
+    <input type="text" name="doctor_name" placeholder="Doctor Name" required><br><br>
+    <input type="date" name="appointment_date" required><br><br>
+    <input type="time" name="appointment_time" required><br><br>
+    <textarea name="description" placeholder="Description"></textarea><br><br>
+    <button type="submit">Book</button>
+</form>
