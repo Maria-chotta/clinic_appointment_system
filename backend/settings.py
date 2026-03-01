@@ -10,11 +10,27 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-me')
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = [
+render_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME', '').strip()
+env_allowed_hosts = [
     host.strip()
-    for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    for host in os.getenv('ALLOWED_HOSTS', '').split(',')
     if host.strip()
 ]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+if render_hostname:
+    ALLOWED_HOSTS.append(render_hostname)
+ALLOWED_HOSTS.extend(env_allowed_hosts)
+ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS))
+
+env_csrf_trusted = [
+    origin.strip()
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+CSRF_TRUSTED_ORIGINS = env_csrf_trusted
+if render_hostname:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{render_hostname}')
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(CSRF_TRUSTED_ORIGINS))
 
 INSTALLED_APPS = [
     'django.contrib.admin',
