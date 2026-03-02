@@ -74,7 +74,9 @@ const Login = () => {
     setErrorMessage('');
     
     try {
+      console.log('Attempting login with:', formData);
       await login(formData);
+      
       
       const user = JSON.parse(localStorage.getItem('user'));
       if (user) {
