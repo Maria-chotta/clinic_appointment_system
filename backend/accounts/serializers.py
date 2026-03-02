@@ -166,26 +166,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         
         return user
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True, style={'input_type': 'password'})
-    
-    def validate(self, attrs):
-        username = attrs.get('username')
-        password = attrs.get('password')
-        
-        if username and password:
-            user = authenticate(username=username, password=password)
-            
-            if user:
-                if not user.is_active:
-                    raise serializers.ValidationError('User account is disabled.')
-                attrs['user'] = user
-                return attrs
-            else:
-                raise serializers.ValidationError('Unable to log in with provided credentials.')
-        else:
-            raise serializers.ValidationError('Must include "username" and "password".')
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
