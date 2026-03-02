@@ -134,7 +134,21 @@ const Register = () => {
             toast.error(errorMessages.join(' | '));
           }
         } else {
-          toast.error('Registration failed. Please try again.');
+          const baseMessage = 'Registration failed.';
+          const targetUrl = error.config?.baseURL
+            ? `${error.config.baseURL}${error.config.url || ''}`
+            : null;
+          if (error.code === 'ECONNABORTED') {
+            toast.error(`${baseMessage} Request timed out. Check backend server.`);
+          } else if (error.message) {
+            toast.error(
+              targetUrl
+                ? `${baseMessage} ${error.message} (${targetUrl})`
+                : `${baseMessage} ${error.message}`
+            );
+          } else {
+            toast.error(`${baseMessage} Please try again.`);
+          }
         }
       } finally {
         setLoading(false);

@@ -16,10 +16,13 @@ env_allowed_hosts = [
     for host in os.getenv('ALLOWED_HOSTS', '').split(',')
     if host.strip()
 ]
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]', 'testserver']
 if render_hostname:
     ALLOWED_HOSTS.append(render_hostname)
 ALLOWED_HOSTS.extend(env_allowed_hosts)
+if not render_hostname and not env_allowed_hosts:
+    # Local/dev default: accept LAN hostnames and IPs without extra env setup.
+    ALLOWED_HOSTS.append('*')
 ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS))
 
 env_csrf_trusted = [
@@ -80,16 +83,34 @@ WSGI_APPLICATION = 'wsgi.application'
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
+    db_ssl_require = os.getenv('DB_SSL_REQUIRE', 'False').lower() == 'true'
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=db_ssl_require,
+        )
     }
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+    use_postgres = os.getenv('USE_POSTGRES', 'False').lower() == 'true'
+    if use_postgres:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('DB_NAME', 'clinic_system'),
+                'USER': os.getenv('DB_USER', 'postgres'),
+                'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+                'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+                'PORT': os.getenv('DB_PORT', '5432'),
+            }
         }
-    }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -146,21 +167,13 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-    CORS_ALLOWED_ORIGINS = [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-    ]
-else:
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = [
-        origin.strip()
-        for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
-        if origin.strip()
-    ]
+
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'https://clinic-appointment-system-1-pj5c.onrender.com'
+]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_EXPOSE_HEADERS = ['Content-Type', 'Authorization']

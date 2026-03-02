@@ -1,9 +1,28 @@
 import axios from 'axios';
 
-const API_URL = (
-  import.meta.env.VITE_API_URL ||
-  'https://clinic-appointment-system-p3sz.onrender.com/api'
-).replace(/\/+$/, '');
+const getDefaultApiUrl = () => {
+  if (typeof window === 'undefined') {
+    return 'http://127.0.0.1:8000/api';
+  }
+
+  const host = window.location.hostname;
+  const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+  const isLanIp =
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
+  const isLocalHost = ['localhost', '127.0.0.1', '0.0.0.0', ''].includes(host);
+
+  if (isLocalHost || isLanIp) {
+    return `${protocol}//${host || '127.0.0.1'}:8000/api`;
+  }
+
+  return 'https://clinic-appointment-system-p3sz.onrender.com/api';
+};
+
+const defaultApiUrl = getDefaultApiUrl();
+
+const API_URL = (import.meta.env.VITE_API_URL || defaultApiUrl).replace(/\/+$/, '');
 
 const api = axios.create({
   baseURL: API_URL,
@@ -11,6 +30,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
+  timeout: 20000,
 });
 
 // Add token to requests
