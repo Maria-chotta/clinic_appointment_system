@@ -83,8 +83,11 @@ WSGI_APPLICATION = 'wsgi.application'
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
-    # Managed Postgres providers (including Render) usually require SSL.
-    db_ssl_require = os.getenv('DB_SSL_REQUIRE', 'True').lower() == 'true'
+    # Render-managed Postgres requires SSL in production.
+    if render_hostname:
+        db_ssl_require = True
+    else:
+        db_ssl_require = os.getenv('DB_SSL_REQUIRE', 'True').lower() == 'true'
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,

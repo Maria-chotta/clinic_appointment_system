@@ -1,4 +1,4 @@
-from django.shortcuts import render
+import logging
 
 from rest_framework import status, generics, permissions
 from rest_framework.response import Response
@@ -10,6 +10,7 @@ from .serializers import UserSerializer, RegisterSerializer, DoctorProfileSerial
 from .models import DoctorProfile
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -18,7 +19,14 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            try:
+                user = serializer.save()
+            except Exception:
+                logger.exception("User registration failed")
+                return Response(
+                    {'error': 'Registration failed due to a server error.'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
             # DoctorProfile is now created in the serializer's create method
             
             refresh = RefreshToken.for_user(user)
